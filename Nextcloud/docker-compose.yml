@@ -1,0 +1,77 @@
+services:
+  nextcloud-mariadb:
+    image: mariadb
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    restart: always
+    volumes:
+      - nextcloud-mariadb:/var/lib/mysql
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=1
+      - MYSQL_USER
+      - MYSQL_PASSWORD
+      - MYSQL_DATABASE
+
+  nextcloud-redis:
+    image: redis:alpine
+    restart: always
+
+  nextcloud:
+    image: nickistre/nextcloud:fpm-alpine
+    restart: always
+    volumes:
+      - nextcloud:/var/www/html
+    environment:
+      - MYSQL_HOST
+      - MYSQL_USER
+      - MYSQL_PASSWORD
+      - MYSQL_DATABASE
+      - REDIS_HOST
+      - S3_ACCESS_KEY
+      - S3_SECRET_KEY
+      - S3_BUCKETNAME
+      - S3_AUTOCREATE
+      - S3_HOST
+      - S3_PORT
+      - S3_USE_PATH_STYLE
+      - S3_USE_SSL
+    depends_on:
+      - nextcloud-mariadb
+      - nextcloud-redis
+
+  nextcloud-web:
+    image: nickistre/nextcloud-web
+    restart: always
+    ports:
+      - 8080:80
+    volumes:
+      - nextcloud:/var/www/html:ro
+    depends_on:
+      - nextcloud
+
+  nextcloud-cron:
+    image: nickistre/nextcloud-cron:fpm-alpine
+    restart: always
+    volumes:
+      - nextcloud:/var/www/html
+    entrypoint: /cron.sh
+    environment:
+      - MYSQL_HOST
+      - MYSQL_USER
+      - MYSQL_PASSWORD
+      - MYSQL_DATABASE
+      - REDIS_HOST
+      - S3_ACCESS_KEY
+      - S3_SECRET_KEY
+      - S3_BUCKETNAME
+      - S3_AUTOCREATE
+      - S3_HOST
+      - S3_PORT
+      - S3_USE_PATH_STYLE
+      - S3_USE_SSL
+    depends_on:
+      - nextcloud-mariadb
+      - nextcloud-redis
+
+volumes:
+  nextcloud-mariadb:
+  nextcloud:
