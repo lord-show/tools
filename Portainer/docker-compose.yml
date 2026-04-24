@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    ports:
+      - "9443:9443"   # HTTPS
+      - "8000:8000"   # для агентов (опционально)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    command: |
+      --admin-password '$2y$05$...' 
+      --host tcp://tasks.agent:9001
+      --templates http://portainer-templates/templates.json
+    # Альтернативно можно задать пароль администратора через переменную окружения
+    # (только при первом запуске, если папка /data пуста)
+    # environment:
+    #   - PORTAINER_ADMIN_PASSWORD=ваш_пароль_админа
+
+volumes:
+  portainer_data:
